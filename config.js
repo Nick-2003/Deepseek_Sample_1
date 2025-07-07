@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
-
-require('dotenv').config(); 
+import dotenv from 'dotenv';
+dotenv.config();
+// require('dotenv').config(); 
 
 /** Ensure the OpenAI API key is available and correctly configured */
 if (!process.env.DEEPSEEK_API_KEY) {

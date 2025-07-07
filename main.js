@@ -1,8 +1,8 @@
 import openai from './config.js';
-import { getCurrentWeather, getLocation, tools } from "./tools"
+import { fetchStockData, getLocation, tools } from "./tools.js"
 
 const availableFunctions = {
-    getCurrentWeather,
+    fetchStockData,
     getLocation
 }
 
@@ -27,36 +27,34 @@ async function agent(query) {
                 // frequency_penalty: 0,
                 // max_tokens: 7,
             });
+            console.log(response.choices[0])
+            const { finish_reason: finishReason, message } = response.choices[0] // Destructuring of object; finish_reason transferred out as finishReason in process
+            const { tool_calls: toolCalls } = message // Get toolCalls out of message above
+            
+            messages.push(message)
+            
+            if (finishReason === "stop") {
+                console.log(message) // Print message
+                console.log("AGENT ENDING")
+                return // Stop the loop
+            } else if (finishReason === "tool_calls") {
+                for (const toolCall of toolCalls) {
+                    const functionName = toolCall.function.name
+                    const functionToCall = availableFunctions[functionName]
+                    const functionArguments = JSON.parse(toolCall.function.arguments)
+                    const functionResponse = await functionToCall(functionArguments)
+                    messages.push({
+                        tool_call_id: toolCall.id,
+                        role: "tool",
+                        name: functionName,
+                        content: functionResponse
+                    })
+                }
+            }
         } catch (err) {
             console.error(err.message)
-            loadingArea.innerText = 'Unable to access AI. Please refresh and try again'
+            // loadingArea.innerText = 'Unable to access AI. Please refresh and try again'
         }
-
-        console.log(response.choices[0])
-        const { finish_reason: finishReason, message } = response.choices[0] // Destructuring of object; finish_reason transferred out as finishReason in process
-        const { tool_calls: toolCalls } = message // Get toolCalls out of message above
-        
-        messages.push(message)
-        
-        if (finishReason === "stop") {
-            console.log(message) // Print message
-            console.log("AGENT ENDING")
-            return // Stop the loop
-        } else if (finishReason === "tool_calls") {
-            for (const toolCall of toolCalls) {
-                const functionName = toolCall.function.name
-                const functionToCall = availableFunctions[functionName]
-                const functionArguments = JSON.parse(toolCall.function.arguments)
-                const functionResponse = await functionToCall(functionArguments)
-                messages.push({
-                    tool_call_id: toolCall.id,
-                    role: "tool",
-                    name: functionName,
-                    content: functionResponse
-                })
-            }
-        }
-
     }
 }
 
