@@ -1,0 +1,6 @@
+venv
+output*
+data
+*.pyc
+.mypy*
+.env

@@ -1,0 +1,23 @@
+{
+  "name": "deepseek_sample_1",
+  "version": "1.0.0",
+  "description": "Deepseek agent to collect data on a given stock to provide a summary",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js"
+  },
+  "keywords": [
+    "openai",
+    "deepseek",
+    "ai",
+    "chatbot",
+    "tools",
+    "function-calling",
+    "api",
+    "stocks",
+    "finance",
+    "news"
+  ],
+  "author": "Nicholas Tam",
+  "license": "MIT"
+}
