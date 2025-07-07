@@ -1,6 +1,7 @@
-import { dates } from '/utils/dates'
-
-require('dotenv').config(); 
+import { dates } from './utils/dates.js'
+import dotenv from 'dotenv';
+dotenv.config();
+// require('dotenv').config(); 
 
 export async function fetchStockData({tickersArr, }) {
     document.querySelector('.action-panel').style.display = 'none'
@@ -44,7 +45,6 @@ export const tools = [
         function: {
             name: "fetchStockData",
             description: "Get stock data for given list of tickers",
-            // function: getCurrentWeather,
             parameters: {
                 type: "object",
                 properties: {
