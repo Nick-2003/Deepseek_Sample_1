@@ -11,7 +11,13 @@ function getDateNDaysAgo(n) {
     return formatDate(now);
 }
 
+function getDateNHoursAgo(n) {
+    const now = new Date(); // current date and time
+    now.setHours(now.getHours() + 5); // add n hours
+    return formatDate(now);
+}
+
 export const dates = {
-    startDate: getDateNDaysAgo(3), // alter days to increase/decrease data set
+    startDate: getDateNDaysAgo(5), // alter days to increase/decrease data set
     endDate: getDateNDaysAgo(1) // leave at 1 to get yesterday's data
 }
