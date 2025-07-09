@@ -2,18 +2,20 @@
 // For storing stock summary data in a database
 // https://claude.ai/chat/125f2bbb-edfa-480b-bbf3-930485f11df7
 
-import mysql from 'mysql2/promise';
+import mariadb from 'mariadb';
+// import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 dotenv.config();
 
 export class StockSummaryDB {
     constructor() {
-        this.pool = mysql.createPool({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
+        // Pool of database connections
+        this.pool = mariadb.createPool({
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
             database: process.env.DB_NAME || 'stock_analysis',
-            port: process.env.DB_PORT || 3306,
+            port: process.env.DB_PORT,
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0,
@@ -22,32 +24,33 @@ export class StockSummaryDB {
             reconnect: true
         });
         
+        // Setup when database is first initialized
         this.initializeDatabase();
     }
 
     async initializeDatabase() {
         try {
-            // Create database if it doesn't exist
-            const connection = await mysql.createConnection({
-                host: process.env.DB_HOST || 'localhost',
-                user: process.env.DB_USER || 'root',
-                password: process.env.DB_PASSWORD || '',
-                port: process.env.DB_PORT || 3306
+            // Create database if it doesn't exist by creating connection
+            const connection = await mariadb.createConnection({
+                host: process.env.DB_HOST,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                port: process.env.DB_PORT
             });
 
+            // SQL to create database
             await connection.execute(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'stock_analysis'}`);
             await connection.end();
 
             // Create table if it doesn't exist
+            // Index on ticker to speed up queries
             await this.pool.execute(`
-                CREATE TABLE IF NOT EXISTS stock_summaries (
+                CREATE TABLE IF NOT EXISTS ${process.env.DB_TB_NAME || 'stock_summaries'} (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    ticker VARCHAR(10) NOT NULL UNIQUE,
+                    ticker VARCHAR(5) NOT NULL UNIQUE,
                     summary TEXT NOT NULL,
-                    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    INDEX idx_ticker (ticker),
-                    INDEX idx_generated_at (generated_at)
+                    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_ticker (ticker)
                 )
             `);
 
@@ -58,17 +61,22 @@ export class StockSummaryDB {
         }
     }
 
+    // Get existing summary from database
     async getSummary(ticker) {
         try {
+            // SQL query to find the summary for this ticker
+            // The ? is a placeholder that gets replaced with the actual ticker (safer than direct insertion)
             const [rows] = await this.pool.execute(
-                'SELECT ticker, summary, generated_at FROM stock_summaries WHERE ticker = ?',
-                [ticker.toUpperCase()]
+                `SELECT ticker, summary, generated_at FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE ticker = ?`,
+                [ticker.toUpperCase()] // Convert ticker to uppercase
             );
 
+            // If nothing found, return null
             if (rows.length === 0) {
                 return null;
             }
 
+            // Otherwise, return the summary and their generation time
             return {
                 ticker: rows[0].ticker,
                 summary: rows[0].summary,
@@ -80,14 +88,16 @@ export class StockSummaryDB {
         }
     }
 
+    // Save/update summary to database
     async saveSummary(ticker, summary) {
         try {
+            // Save summary; if already exists, update
             await this.pool.execute(`
-                INSERT INTO stock_summaries (ticker, summary) 
+                INSERT INTO ${process.env.DB_TB_NAME || 'stock_summaries'} (ticker, summary) 
                 VALUES (?, ?) 
                 ON DUPLICATE KEY UPDATE 
                     summary = VALUES(summary),
-                    updated_at = CURRENT_TIMESTAMP
+                    generated_at = CURRENT_TIMESTAMP
             `, [ticker.toUpperCase(), summary]);
 
             console.log(`Summary saved for ${ticker.toUpperCase()}`);
@@ -97,7 +107,9 @@ export class StockSummaryDB {
         }
     }
 
+    // Check if summary is stale (time between last generated time and now is past threshold)
     async isSummaryStale(summaryData, hoursThreshold = 5) {
+        // If no data, counts as stale
         if (!summaryData || !summaryData.generatedAt) {
             return true;
         }
@@ -105,15 +117,17 @@ export class StockSummaryDB {
         // Convert generated_at to Date object if it's not already
         const generatedTime = new Date(summaryData.generatedAt);
         const currentTime = new Date();
+        
+        // Time difference
         const hoursDiff = (currentTime - generatedTime) / (1000 * 60 * 60);
-
         return hoursDiff >= hoursThreshold;
     }
 
+    // Get all summaries in descending order
     async getAllSummaries() {
         try {
             const [rows] = await this.pool.execute(
-                'SELECT ticker, summary, generated_at FROM stock_summaries ORDER BY generated_at DESC'
+                `SELECT ticker, summary, generated_at FROM ${process.env.DB_TB_NAME || 'stock_summaries'} ORDER BY generated_at DESC`
             );
             return rows;
         } catch (err) {
@@ -122,10 +136,11 @@ export class StockSummaryDB {
         }
     }
 
+    // Delete specific summary
     async deleteSummary(ticker) {
         try {
             await this.pool.execute(
-                'DELETE FROM stock_summaries WHERE ticker = ?',
+                `DELETE FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE ticker = ?`,
                 [ticker.toUpperCase()]
             );
             console.log(`Summary deleted for ${ticker.toUpperCase()}`);
@@ -135,25 +150,27 @@ export class StockSummaryDB {
         }
     }
 
+    // Delete old summaries to free up space; should be run before isSummaryStale()
     async clearOldSummaries(hoursThreshold = 24) {
         try {
             const [result] = await this.pool.execute(
-                'DELETE FROM stock_summaries WHERE generated_at < DATE_SUB(NOW(), INTERVAL ? HOUR)',
+                `DELETE FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE generated_at < DATE_SUB(NOW(), INTERVAL ? HOUR)`,
                 [hoursThreshold]
             );
             console.log(`Cleared ${result.affectedRows} old summaries`);
-            return result.affectedRows;
+            return result.affectedRows; // Return number of deleted rows
         } catch (err) {
             console.error('Error clearing old summaries:', err);
             throw err;
         }
     }
 
+    // Get database statistics
     async getStats() {
         try {
-            const [countResult] = await this.pool.execute('SELECT COUNT(*) as total FROM stock_summaries');
+            const [countResult] = await this.pool.execute(`SELECT COUNT(*) as total FROM ${process.env.DB_TB_NAME || 'stock_summaries'}`);
             const [recentResult] = await this.pool.execute(
-                'SELECT COUNT(*) as recent FROM stock_summaries WHERE generated_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)'
+                `SELECT COUNT(*) as recent FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE generated_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`
             );
 
             return {
@@ -166,7 +183,7 @@ export class StockSummaryDB {
         }
     }
 
-    // Helper method to extract ticker from query
+    // Emergency helper method to extract ticker from query (If extractTickerFromQuery() in main.js fails)
     extractTicker(query) {
         // Simple regex patterns for common ticker formats
         const patterns = [
@@ -209,10 +226,12 @@ export class StockSummaryDB {
         return null;
     }
 
+    // Close the database connection
     async close() {
         await this.pool.end();
     }
 
+    // Test database connection
     async testConnection() {
         try {
             const connection = await this.pool.getConnection();
