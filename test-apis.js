@@ -1,6 +1,6 @@
 // test-apis.js
 import openai from './config.js';
-import { stockDB } from './utils/database.js';
+import { StockSummaryDB } from './utils/database.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -92,6 +92,8 @@ async function runTests() {
     console.log()
     const marketauxWorking = await testMarketauxAPI()
     console.log()
+
+    const stockDB = new StockSummaryDB();
     const databaseWorking = await stockDB.testConnection(); // Test the connection for database
     stockDB.close()
     
