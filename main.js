@@ -56,7 +56,7 @@ async function agent(query) {
             // Get corresponding summary
             cachedSummary = await stockDB.getSummary(ticker); 
             // Check if summary is stale, if it exists
-            if (cachedSummary && !(await stockDB.isSummaryStale(cachedSummary, 5))) {
+            if (cachedSummary && !(await stockDB.isSummaryStale(cachedSummary, 1))) {
                 useCache = true;
                 console.log(`Using cached summary for ${ticker} (generated at ${cachedSummary.generatedAt})`);
             } else if (cachedSummary) {
@@ -220,8 +220,8 @@ console.log('DeepSeek API Key present:', !!process.env.DEEPSEEK_API_KEY)
 console.log('DeepSeek Base URL:', process.env.DEEPSEEK_BASE_URL)
 console.log('Polygon API Key present:', !!process.env.POLYGON_API_KEY)
 
-console.log('\n=== Caching ===')
-const result1 = await agent("Provide information on Futu Holdings stocks.");
+console.log('\n=== Caching #1 ===')
+const result1 = await agent("Provide information on Tesla stocks.");
 console.log('\n=== AGENT RESULT ===');
 console.log('Success:', result1.success);
 console.log('Source:', result1.source);
@@ -230,12 +230,22 @@ if (result1.error) {
     console.log('Error:', result1.error);
 }
 
-console.log('\n=== Retrieval ===')
-const result2 = await agent("Provide information on Futu Holdings stocks.");
+console.log('\n=== Retrieval #1 ===')
+const result2 = await agent("Explain how Tesla stocks are performing as of late.");
 console.log('\n=== AGENT RESULT ===');
 console.log('Success:', result2.success);
 console.log('Source:', result2.source);
 console.log('Ticker:', result2.ticker);
 if (result2.error) {
     console.log('Error:', result2.error);
+}
+
+console.log('\n=== Caching #2 ===')
+const result3 = await agent("Describe the performance of Futu Holdings recently");
+console.log('\n=== AGENT RESULT ===');
+console.log('Success:', result3.success);
+console.log('Source:', result3.source);
+console.log('Ticker:', result3.ticker);
+if (result3.error) {
+    console.log('Error:', result3.error);
 }
