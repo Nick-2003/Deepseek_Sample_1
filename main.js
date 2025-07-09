@@ -1,5 +1,6 @@
 import openai from './config.js';
 import { fetchStockData, getLocation, getTickerNews, tools } from "./utils/tools.js"
+import { stockDB } from './utils/database.js';
 
 const availableFunctions = {
     fetchStockData,
@@ -32,7 +33,13 @@ async function extractTickerFromQuery(query) {
 }
 
 async function agent(query) {
+    // Test database connection first
+    const dbConnected = await stockDB.testConnection();
+    if (!dbConnected) {
+        console.log('Database connection failed, proceeding without cache');
+    }
 
+    // Extract ticker
     const ticker = await extractTickerFromQuery(query);
     console.log('Extracted ticker:', ticker);
 

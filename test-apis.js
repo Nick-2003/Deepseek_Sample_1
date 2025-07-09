@@ -1,5 +1,6 @@
 // test-apis.js
 import openai from './config.js';
+import { stockDB } from './utils/database.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -82,6 +83,7 @@ async function runTests() {
     console.log('DeepSeek Base URL:', process.env.DEEPSEEK_BASE_URL || 'Missing')
     console.log('Polygon API Key:', process.env.POLYGON_API_KEY ? 'Present' : 'Missing')
     console.log('Marketaux API Key:', process.env.MARKETAUX_API_KEY ? 'Present' : 'Missing')
+    
     console.log()
     
     const deepSeekWorking = await testDeepSeekAPI()
@@ -89,14 +91,18 @@ async function runTests() {
     const polygonWorking = await testPolygonAPI()
     console.log()
     const marketauxWorking = await testMarketauxAPI()
+    console.log()
+    const databaseWorking = await stockDB.testConnection(); // Test the connection for database
+    stockDB.close()
     
     console.log()
     console.log('=== Test Results ===')
     console.log('DeepSeek API:', deepSeekWorking ? '✅ Working' : '❌ Failed')
     console.log('Polygon API:', polygonWorking ? '✅ Working' : '❌ Failed')
     console.log('Marketaux API:', marketauxWorking ? '✅ Working' : '❌ Failed')
+    console.log('Database connected:', databaseWorking ? '✅ Working' : '❌ Failed');
     
-    if (deepSeekWorking && polygonWorking && marketauxWorking) {
+    if (deepSeekWorking && polygonWorking && marketauxWorking && databaseWorking) {
         console.log('🎉 All APIs working! You can run your main script.')
     } else {
         console.log('⚠️  Some APIs are not working. Check your credentials and network connection.')
