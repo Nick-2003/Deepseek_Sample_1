@@ -4,22 +4,6 @@ dotenv.config();
 // require('dotenv').config(); 
 
 export async function fetchStockData({ticker, }) {
-    // document.querySelector('.action-panel').style.display = 'none'
-    // try {
-        // const stockData = await Promise.all(tickersArr.map(async (ticker) => {
-        //     const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dates.startDate}/${dates.endDate}?apiKey=${process.env.POLYGON_API_KEY}`
-        //     const response = await fetch(url)
-        //     const data = await response.text()
-        //     const status = await response.status
-        //     if (status === 200) {
-        //         // apiMessage.innerText = 'Creating report...'
-        //         console.log('Creating report...')
-        //         return data
-        //     } else {
-        //         // loadingArea.innerText = 'There was an error fetching stock data.'
-        //         console.log('There was an error fetching stock data.')
-        //     }
-        // }))
     try {
         const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dates.startDate}/${dates.endDate}?apiKey=${process.env.POLYGON_API_KEY}`
         const response = await fetch(url)
@@ -40,18 +24,6 @@ export async function fetchStockData({ticker, }) {
         console.error('error: ', err)
         return JSON.stringify({error: 'Failed to fetch stock data'})
     }
-}
-
-// Version of getLocation that uses fetch of current IP address to get the location
-export async function getLocation() {
-  try {
-    const response = await fetch('https://ipapi.co/json/')
-    const text = await response.json()
-    return JSON.stringify(text)
-  } catch (err) {
-    console.log(err)
-    return JSON.stringify({error: 'Failed to get location'})  // Added return for error case
-  }
 }
 
 export async function getTickerNews({ticker, }) {
@@ -90,18 +62,6 @@ export const tools = [
                     },
                 },
                 required: ["ticker"]
-            }
-        }
-    },
-    {
-        type: "function",
-        function: {
-            name: "getLocation",
-            description: "Get the user's current location",
-            // function: getLocation,
-            parameters: {
-                type: "object",
-                properties: {}
             }
         }
     },

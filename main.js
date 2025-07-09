@@ -1,10 +1,9 @@
 import openai from './config.js';
-import { fetchStockData, getLocation, getTickerNews, tools } from "./utils/tools.js"
+import { fetchStockData, getTickerNews, tools } from "./utils/tools.js"
 import { StockSummaryDB } from './utils/database.js';
 
 const availableFunctions = {
     fetchStockData,
-    getLocation,
     getTickerNews,
 }
 
@@ -56,7 +55,7 @@ async function agent(query) {
             // Get corresponding summary
             cachedSummary = await stockDB.getSummary(ticker); 
             // Check if summary is stale, if it exists
-            if (cachedSummary && !(await stockDB.isSummaryStale(cachedSummary, 1))) {
+            if (cachedSummary && !(await stockDB.isSummaryStale(cachedSummary, 5))) {
                 useCache = true;
                 console.log(`Using cached summary for ${ticker} (generated at ${cachedSummary.generatedAt})`);
             } else if (cachedSummary) {
