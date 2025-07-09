@@ -66,7 +66,8 @@ export class StockSummaryDB {
         try {
             // SQL query to find the summary for this ticker
             // The ? is a placeholder that gets replaced with the actual ticker (safer than direct insertion)
-            const [rows] = await this.pool.execute(
+            // const [rows] = await this.pool.execute( // For mysql2
+            const rows = await this.pool.execute(
                 `SELECT ticker, summary, generated_at FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE ticker = ?`,
                 [ticker.toUpperCase()] // Convert ticker to uppercase
             );
@@ -120,13 +121,14 @@ export class StockSummaryDB {
         
         // Time difference
         const hoursDiff = (currentTime - generatedTime) / (1000 * 60 * 60);
-        return hoursDiff >= hoursThreshold;
+        return (hoursDiff >= hoursThreshold);
     }
 
     // Get all summaries in descending order
     async getAllSummaries() {
         try {
-            const [rows] = await this.pool.execute(
+            // const [rows] = await this.pool.execute(// For mysql2
+            const rows = await this.pool.execute(
                 `SELECT ticker, summary, generated_at FROM ${process.env.DB_TB_NAME || 'stock_summaries'} ORDER BY generated_at DESC`
             );
             return rows;
@@ -153,7 +155,8 @@ export class StockSummaryDB {
     // Delete old summaries to free up space; should be run before isSummaryStale()
     async clearOldSummaries(hoursThreshold = 24) {
         try {
-            const [result] = await this.pool.execute(
+            // const [result] = await this.pool.execute( // For mysql2
+            const result = await this.pool.execute(
                 `DELETE FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE generated_at < DATE_SUB(NOW(), INTERVAL ? HOUR)`,
                 [hoursThreshold]
             );
@@ -168,8 +171,10 @@ export class StockSummaryDB {
     // Get database statistics
     async getStats() {
         try {
-            const [countResult] = await this.pool.execute(`SELECT COUNT(*) as total FROM ${process.env.DB_TB_NAME || 'stock_summaries'}`);
-            const [recentResult] = await this.pool.execute(
+            // const [countResult] = await this.pool.execute(`SELECT COUNT(*) as total FROM ${process.env.DB_TB_NAME || 'stock_summaries'}`); // For mysql2
+            const countResult = await this.pool.execute(`SELECT COUNT(*) as total FROM ${process.env.DB_TB_NAME || 'stock_summaries'}`);
+            // const [recentResult] = await this.pool.execute( // For mysql2
+            const recentResult = await this.pool.execute(
                 `SELECT COUNT(*) as recent FROM ${process.env.DB_TB_NAME || 'stock_summaries'} WHERE generated_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`
             );
 
@@ -246,4 +251,5 @@ export class StockSummaryDB {
     }
 }
 
-export const stockDB = new StockSummaryDB();
+// export const stockDB = new StockSummaryDB();
+// stockDB.close();
