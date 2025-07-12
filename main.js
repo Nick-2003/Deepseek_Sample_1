@@ -83,9 +83,24 @@ async function agent(query) {
                 { role: "system", content: `
                     You are a helpful investment bank research analyst AI agent. Your job is to conduct fundamental research on companies using various data sources, including financial statements, news, earnings call of itself and of related companies, and forums.
                     Based on a provided stock, provide a short summary of the stock's financial performance, based on recent price changes and relevant financial news as of late. 
-                    * If there is a stock news summary available from the database and the specified period of time has not passed yet, provide that summary instead of generating a response; otherwise, generate a new summary and save it and its corresponding generation time into the database.
-                    * Provide the response as if it were the conclusion of a research report. 
-                    * Prioritise gathering information with the tools provided rather than giving basic, generic answers.
+                    * If there is stock news summary available from database and specified period of time has not passed yet, provide that summary instead of generating a response; otherwise, generate new summary and save it and its corresponding generation time into database.
+                    * Prioritise gathering information with tools provided rather than giving basic, generic answers.
+                    * Provide response as if it were summary and conclusion of a research report; example format below 
+                    Example: 
+                    ### Tesla (TSLA) Stock Analysis
+                    #### Recent Price Performance
+                    Tesla's stock has shown notable activity in recent trading sessions:
+                    - **July 8, 2025**: The stock closed at **$293.94**, with a high of **$296.15** and a low of **$288.77**. Trading volume was robust at approximately **131.18 million shares**.
+                    - **July 9, 2025**: The stock closed slightly higher at **$297.81**, with a high of **$304.05** and a low of **$294.35**. Trading volume remained strong at around **103.25 million shares**.
+                    #### Key News Highlights
+                    1. **CEO Elon Musk's Response to Analyst Concerns**  
+                       Elon Musk publicly dismissed concerns raised by Wedbush Securities analyst Dan Ives regarding his political ventures. Musk's blunt response ("Shut up, Dan") has drawn attention, reflecting ongoing scrutiny of his dual roles at Tesla and in political arenas. The sentiment around this news was mixed, with some investors questioning the board's oversight.
+                    2. **Political and Economic Commentary**  
+                       Senator Elizabeth Warren criticized recent legislative developments, which could indirectly impact Tesla and other companies. The broader market reaction to political uncertainty has been cautious, though Tesla's stock sentiment in this context was neutral to slightly positive.
+                    3. **Market Volatility Amid Tariff Uncertainty** 
+                       Tesla's stock was mentioned in the context of broader market movements, where it gained amid mixed performances in the S&P 500 and Nasdaq. Investors are closely watching Federal Reserve policies and trade tariffs for further direction.
+                    #### Conclusion
+                    Tesla's stock remains volatile, influenced by both company-specific developments (e.g., CEO actions) and broader market dynamics (e.g., political and economic uncertainty). While recent price movements indicate resilience, the mixed sentiment from news highlights the need for investors to monitor both internal governance and external macroeconomic factors closely. The stock's performance in the coming weeks will likely hinge on clarity around these issues.
                     ` },
                 { role: "user", content: query }
             ]
@@ -247,4 +262,14 @@ console.log('Source:', result3.source);
 console.log('Ticker:', result3.ticker);
 if (result3.error) {
     console.log('Error:', result3.error);
+}
+
+console.log('\n=== Caching #3 ===')
+const result4 = await agent("Explain Meta's stock performance.");
+console.log('\n=== AGENT RESULT ===');
+console.log('Success:', result4.success);
+console.log('Source:', result4.source);
+console.log('Ticker:', result4.ticker);
+if (result4.error) {
+    console.log('Error:', result4.error);
 }
